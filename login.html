@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e0f7e9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+        }
+
+        h2 {
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        input {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #27ae60;
+            border-radius: 5px;
+            background-color: #f9fff7;
+        }
+
+        button {
+            padding: 10px;
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #218c53;
+        }
+
+        .link {
+            margin-top: 15px;
+            display: block;
+            color: #27ae60;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Log In</h2>
+    <form id="login-form">
+        <label for="login-username">Username:</label>
+        <input type="text" id="login-username" required>
+
+        <label for="login-password">Password:</label>
+        <input type="password" id="login-password" required>
+
+        <button type="submit">Log In</button>
+    </form>
+    <a href="signup.html" class="link">Haven't got an account? Sign up here</a>
+</div>
+<script>
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
+        // Retrieve user data from localStorage
+        const storedPassword = localStorage.getItem(username);
+
+        if (storedPassword && storedPassword === password) {
+            alert('Login successful! Welcome, ' + username);
+
+            // Optionally, log the interaction
+            logUserInteraction('login');
+
+            // Redirect to main app page
+            window.location.href = 'home.html';
+        } else {
+            alert('Invalid username or password.');
+        }
+    });
+
+    function logUserInteraction(action) {
+        const interactionLog = JSON.parse(localStorage.getItem('interactionLog')) || [];
+        interactionLog.push({
+            action: action,
+            timestamp: new Date().toLocaleString()
+        });
+        localStorage.setItem('interactionLog', JSON.stringify(interactionLog));
+    }
+</script>
+</body>
+</html>

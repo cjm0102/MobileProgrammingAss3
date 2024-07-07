@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    
+</head>
+
+<body>
+    <div class="bmi-container">
+        <h1>BMI Calculator</h1>
+        <form id="bmiForm" class="bmi-form">
+            <label for="weight">Weight (kg):</label>
+            <input type="number" id="weight" step="0.1" required>
+            <label for="height">Height (m):</label>
+            <input type="number" id="height" step="0.01" required>
+            <button type="submit">Calculate BMI</button>
+        </form>
+        <button class="display-button" id="displayData">Display Previous Records</button>
+        <button class="clear-button" id="clearData">Clear Data</button>
+        <table id="resultsTable" class="bmi-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Weight (kg)</th>
+                    <th>Height (m)</th>
+                    <th>BMI</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="currentRecord"></tbody>
+            <tbody id="previousRecords" style="display:none;"></tbody>
+        </table>
+        <div id="initializeExercises">
+            <h2>Exercise Recommendations</h2>
+        </div>
+    </div>
+      
+   
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const bmiForm = document.getElementById("bmiForm");
+            const displayButton = document.getElementById("displayData");
+            const clearButton = document.getElementById("clearData");
+            const currentRecordBody = document.getElementById("currentRecord");
+            const previousRecordsBody = document.getElementById("previousRecords");
+            const initializeExercisesDiv = document.getElementById("initializeExercises");
+
+            const apiKey = 'XRV8wvJg4oq18pacoKpIPA==EIoybngaJSEw0W5t'; // Replace with your actual API key
+            const apiEndpoint = 'https://api.api-ninjas.com/v1/exercises?muscle=';
+
+            async function fetchExercises(muscle) {
+                try {
+                    const response = await fetch(`${apiEndpoint}${muscle}`, {
+                        headers: {
+                            'X-Api-Key': apiKey
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('Failed to fetch exercises:', error);
+                    return [];
+                }
+            }
+
+            function displayExercises(exercises) {
+                initializeExercisesDiv.innerHTML += exercises.map(exercise => `
+                    <p>Name: ${exercise.name}</p>
+                    <p>Type: ${exercise.type}</p>
+                    <p>Muscle: ${exercise.muscle}</p>
+                    <p>Equipment: ${exercise.equipment}</p>
+                    <p>Difficulty: ${exercise.difficulty}</p>
+                    <hr>
+                `).join('');
+            }
+
+            async function initializeExercises(muscle) {
+                const exercises = await fetchExercises(muscle);
+                displayExercises(exercises);
+            }
+
+            function getBMIRecords() {
+                return JSON.parse(localStorage.getItem("bmiRecords")) || [];
+            }
+
+            function setBMIRecords(records) {
+                localStorage.setItem("bmiRecords", JSON.stringify(records));
+            }
+
+            function displayCurrentRecord(record) {
+                currentRecordBody.innerHTML = `
+                    <tr>
+                        <td>${record.date}</td>
+                        <td>${record.weight}</td>
+                        <td>${record.height}</td>
+                        <td>${record.bmi}</td>
+                        <td>${record.status}</td>
+                    </tr>
+                `;
+            }
+
+            function displayPreviousRecords() {
+                const records = getBMIRecords();
+                previousRecordsBody.innerHTML = "";
+                for (let i = records.length - 2; i >= 0; i--) {
+                    const record = records[i];
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${record.date}</td>
+                        <td>${record.weight}</td>
+                        <td>${record.height}</td>
+                        <td>${record.bmi}</td>
+                        <td>${record.status}</td>
+                    `;
+                    previousRecordsBody.appendChild(row);
+                }
+                previousRecordsBody.style.display = 'table-row-group';
+            }
+
+            function calculateBMI(weight, height) {
+                return (weight / (height * height)).toFixed(1);
+            }
+
+            function getBMIStatus(bmi) {
+                if (bmi < 18.5) return "Underweight";
+                if (bmi < 24.9) return "Normal weight";
+                if (bmi < 29.9) return "Overweight";
+                return "Obesity";
+            }
+
+            bmiForm.addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                const weight = parseFloat(document.getElementById("weight").value);
+                const height = parseFloat(document.getElementById("height").value);
+
+                if (isNaN(weight) || isNaN(height)) {
+                    alert("Please fill out all fields correctly.");
+                    return;
+                }
+
+                const bmi = calculateBMI(weight, height);
+                const status = getBMIStatus(bmi);
+                const date = new Date().toLocaleString();
+
+                const newRecord = { date, weight, height, bmi, status };
+                const records = getBMIRecords();
+                records.push(newRecord);
+                setBMIRecords(records);
+
+                displayCurrentRecord(newRecord);
+
+                bmiForm.reset();
+            });
+
+            displayButton.addEventListener("click", function() {
+                displayPreviousRecords();
+            });
+
+            clearButton.addEventListener("click", function() {
+                localStorage.removeItem("bmiRecords");
+                previousRecordsBody.innerHTML = "";
+                previousRecordsBody.style.display = 'none';
+                currentRecordBody.innerHTML = "";
+            });
+
+            // Initialize exercises on page load
+            initializeExercises('biceps'); // Example muscle, replace with desired muscle group
+        });
+    </script>
+    
+     
+      <!-- Navigation Bar -->
+      <nav class="navbar fixed-bottom navbar-light bg-light">
+        <div class="container-fluid justify-content-around">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-house-fill"></i>
+                <span class="nav-text">Home</span>
+            </a>
+            <a class="navbar-brand" href="bmi.html">
+                <i class="bi bi-heart"></i>
+                <span class="nav-text">BMI</span>
+            </a>
+            <a class="navbar-brand" href="Nutrition.html">
+                <i class="bi bi-egg-fried"></i>
+                <span class="nav-text">Nutrition</span>
+            </a>
+            <a class="navbar-brand" href="Weather.html">
+                <i class="bi bi-cloud-sun"></i>
+                <span class="nav-text">Weather</span>
+            </a>
+        </div>
+    </nav>
+</div>
+   
+</body>
+ 
+</html>

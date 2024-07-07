@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: #d4edda;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .weather-exercise-container {
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px 0;
+        }
+        .weather-container, .exercise-container {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            overflow: auto;
+        }
+        .weather-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .weather-info img {
+            width: 80px;
+        }
+        .day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .day:last-child {
+            border-bottom: none;
+        }
+        .exercise-suggestions h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        .exercise-suggestions .exercise {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .exercise-suggestions .exercise i {
+            font-size: 40px;
+            margin-right: 10px;
+        }
+        .navbar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: #fff;
+            border-top: 1px solid #ddd;
+            box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.1);
+        }
+        .navbar .nav-link {
+            color: #28a745;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        .navbar .nav-link i {
+            font-size: 20px;
+        }
+        .navbar .nav-link .nav-text {
+            font-size: 10px;
+            margin-top: 5px;
+        }
+        .navbar .nav-link.active {
+            color: #28a745;
+        }
+        .navbar-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #28a745;
+        }
+        .navbar-brand i {
+            font-size: 20px;
+        }
+        .navbar-brand .nav-text {
+            font-size: 10px;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+<div class="weather-exercise-container">
+    <div class="weather-container">
+        <button onclick="window.history.back()" class="btn btn-secondary mb-3">Back</button>
+        <h1>Current Weather</h1>
+        <div class="weather-info">
+            <p id="location"></p>
+            <p id="description"></p>
+            <p id="temperature"></p>
+            <p id="date"></p>
+            <img id="icon" src="" alt="Weather Icon">
+        </div>
+        <div class="forecast-container">
+            <h2>7-Day Forecast</h2>
+            <div id="forecast"></div>
+        </div>
+    </div>
+    <div class="exercise-container">
+        <h3>Suggested Exercises</h3>
+        <div id="exerciseList"></div>
+    </div>
+</div>
+
+<nav class="navbar fixed-bottom navbar-light bg-light">
+    <div class="container-fluid justify-content-around">
+        <a class="nav-link" href="index.html">
+            <i class="bi bi-house-fill"></i>
+            <span class="nav-text">Home</span>
+        </a>
+        <a class="nav-link" href="bmi.html">
+            <i class="bi bi-heart"></i>
+            <span class="nav-text">BMI</span>
+        </a>
+        <a class="nav-link" href="Nutrition.html">
+            <i class="bi bi-egg-fried"></i>
+            <span class="nav-text">Nutrition</span>
+        </a>
+        <a class="nav-link active" href="Weather.html">
+            <i class="bi bi-cloud-sun"></i>
+            <span class="nav-text">Weather</span>
+        </a>
+    </div>
+</nav>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script>
+    const apiKey = '5a1c0e8bd8034584bde12441240607';
+
+    function fetchWeather(lat, lon) {
+        const currentWeatherUrl = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${lat},${lon}&aqi=no`;
+        const forecastUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${lat},${lon}&days=8&aqi=no&alerts=no`;
+
+        fetch(currentWeatherUrl)
+            .then(response => response.json())
+            .then(data => {
+                const location = `${data.location.name}, ${data.location.country}`;
+                const description = data.current.condition.text;
+                const temperature = `${data.current.temp_c}°C`;
+                const iconUrl = `https:${data.current.condition.icon}`;
+                const date = moment().format('MMMM Do YYYY, h:mm:ss a');
+
+                $('#location').text(location);
+                $('#description').text(description);
+                $('#temperature').text(temperature);
+                $('#icon').attr('src', iconUrl);
+                $('#date').text(date);
+
+                displayExercises(description);
+            })
+            .catch(error => {
+                console.error('Error fetching the current weather data:', error);
+                alert('Error fetching the current weather data.');
+            });
+
+        fetch(forecastUrl)
+            .then(response => response.json())
+            .then(data => {
+                const forecast = data.forecast.forecastday.slice(1); // Get forecast for the next 7 days
+                let forecastHtml = '';
+
+                forecast.forEach(day => {
+                    const date = moment(day.date).format('MMMM Do');
+                    const description = day.day.condition.text;
+                    const temperature = `${day.day.avgtemp_c}°C`;
+                    const iconUrl = `https:${day.day.condition.icon}`;
+
+                    forecastHtml += `
+                        <div class="day" onclick="showDetails('${date}', '${description}', '${temperature}', '${iconUrl}', '${day.day.condition.text}')">
+                            <div>${date}</div>
+                            <div>${description}</div>
+                            <div>${temperature}</div>
+                            <img src="${iconUrl}" alt="Weather Icon">
+                        </div>
+                    `;
+                });
+
+                $('#forecast').html(forecastHtml);
+            })
+            .catch(error => {
+                console.error('Error fetching the forecast data:', error);
+                alert('Error fetching the forecast data.');
+            });
+    }
+
+    function displayExercises(description) {
+        let exercises = [];
+        if (description.toLowerCase().includes('sunny')) {
+            exercises = ['Outdoor jogging', 'Biking', 'Hiking'];
+        } else if (description.toLowerCase().includes('cloudy')) {
+            exercises = ['Outdoor jogging', 'Biking', 'Hiking','Indoor yoga', 'Home workout', 'Gym exercises'];
+        } else if (description.toLowerCase().includes('rain') || description.toLowerCase().includes('thunderstorm')) {
+            exercises = ['Indoor yoga', 'Home workout', 'Gym exercises'];
+        }
+
+        let exerciseHtml = '';
+        exercises.forEach(exercise => {
+            let icon;
+            switch (exercise) {
+                case 'Outdoor jogging':
+                    icon = 'bi bi-person-running';
+                    break;
+                case 'Biking':
+                    icon = 'bi bi-bicycle';
+                    break;
+                case 'Hiking':
+                    icon = 'bi bi-tree';
+                    break;
+                case 'Indoor yoga':
+                    icon = 'bi bi-body-text';
+                    break;
+                case 'Home workout':
+                    icon = 'bi bi-house-door';
+                    break;
+                case 'Gym exercises':
+                    icon = 'bi bi-heart-pulse';
+                    break;
+                default:
+                    icon = 'bi bi-question-circle';
+                    break;
+            }
+            exerciseHtml += `
+                <div class="exercise">
+                    <i class="${icon}"></i>
+                    <span>${exercise}</span>
+                </div>
+            `;
+        });
+
+        $('#exerciseList').html(exerciseHtml);
+    }
+
+    function showDetails(date, description, temperature, iconUrl, condition) {
+        $('#location').text(date);
+        $('#description').text(description);
+        $('#temperature').text(temperature);
+        $('#icon').attr('src', iconUrl);
+
+        displayExercises(condition);
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    fetchWeather(lat, lon);
+                },
+                (error) => {
+                    if (error.code === error.PERMISSION_DENIED) {
+                        alert('Location permission denied. Redirecting to the previous page.');
+                        window.history.back();
+                    }
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by this browser.');
+        }
+    }
+
+    $(document).ready(function() {
+        getLocation();
+    });
+</script>
+</body>
+</html>
